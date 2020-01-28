@@ -29,33 +29,32 @@ import XCTest
 import SystemKit
 
 class SystemKitTests: XCTestCase {
-    
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of
         // each test method in the class.
     }
-    
+
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation
         // of each test method in the class.
         super.tearDown()
     }
-    
+
     func testBattery() {
         var battery = Battery()
-        
+
         // Is it a laptop?
         // TODO: pmset may have a better way of doing this
         if battery.open() != kIOReturnSuccess { return }
-        
+
         // testOpenConnectionTwice
         XCTAssertNotEqual(battery.open(), kIOReturnSuccess)
-        
+
         // testCloseConnectionTwice
         XCTAssertEqual(battery.close(), kIOReturnSuccess)
         //XCTAssertNotEqual(battery.close(), kIOReturnSuccess)
-        
+
         // Test that we can reopen and things still work
         //battery.open()
     }

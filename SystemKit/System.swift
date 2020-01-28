@@ -32,71 +32,59 @@ import Foundation
 // MARK: PRIVATE PROPERTIES
 //------------------------------------------------------------------------------
 
-
 // As defined in <mach/tash_info.h>
 
-private let HOST_BASIC_INFO_COUNT         : mach_msg_type_number_t =
+private let HOST_BASIC_INFO_COUNT: mach_msg_type_number_t =
                       UInt32(MemoryLayout<host_basic_info_data_t>.size / MemoryLayout<integer_t>.size)
-private let HOST_LOAD_INFO_COUNT          : mach_msg_type_number_t =
+private let HOST_LOAD_INFO_COUNT: mach_msg_type_number_t =
                        UInt32(MemoryLayout<host_load_info_data_t>.size / MemoryLayout<integer_t>.size)
-private let HOST_CPU_LOAD_INFO_COUNT      : mach_msg_type_number_t =
+private let HOST_CPU_LOAD_INFO_COUNT: mach_msg_type_number_t =
                    UInt32(MemoryLayout<host_cpu_load_info_data_t>.size / MemoryLayout<integer_t>.size)
-private let HOST_VM_INFO64_COUNT          : mach_msg_type_number_t =
+private let HOST_VM_INFO64_COUNT: mach_msg_type_number_t =
                       UInt32(MemoryLayout<vm_statistics64_data_t>.size / MemoryLayout<integer_t>.size)
-private let HOST_SCHED_INFO_COUNT         : mach_msg_type_number_t =
+private let HOST_SCHED_INFO_COUNT: mach_msg_type_number_t =
                       UInt32(MemoryLayout<host_sched_info_data_t>.size / MemoryLayout<integer_t>.size)
-private let PROCESSOR_SET_LOAD_INFO_COUNT : mach_msg_type_number_t =
+private let PROCESSOR_SET_LOAD_INFO_COUNT: mach_msg_type_number_t =
               UInt32(MemoryLayout<processor_set_load_info_data_t>.size / MemoryLayout<natural_t>.size)
 
-
-public struct System {
-    
+public struct SKSystem {
     //--------------------------------------------------------------------------
     // MARK: PUBLIC PROPERTIES
     //--------------------------------------------------------------------------
-    
-    
+
     /**
     System page size.
     
     - Can check this via pagesize shell command as well
     - C lib function getpagesize()
     - host_page_size()
-    
-    TODO: This should be static right?
     */
     public static let PAGE_SIZE = vm_kernel_page_size
-    
-    
+
     //--------------------------------------------------------------------------
     // MARK: PUBLIC ENUMS
     //--------------------------------------------------------------------------
-    
-    
+
     /**
     Unit options for method data returns.
-    
-    TODO: Pages?
     */
-    public enum Unit : Double {
+    public enum Unit: Double {
         // For going from byte to -
-        case byte     = 1
+        case byte = 1
         case kilobyte = 1024
-        case megabyte = 1048576
-        case gigabyte = 1073741824
+        case megabyte = 1_048_576
+        case gigabyte = 1_073_741_824
     }
-    
-    
+
     /// Options for loadAverage()
-    public enum LOAD_AVG {
+    public enum LoadAvg {
         /// 5, 30, 60 second samples
         case short
-        
+
         /// 1, 5, 15 minute samples
         case long
     }
-    
-    
+
     /// For thermalLevel()
     public enum ThermalLevel: String {
         // Comments via <IOKit/pwr_mgt/IOPM.h>
@@ -113,64 +101,56 @@ public struct System {
         case Unknown = "Unknown"
     }
 
-
     //--------------------------------------------------------------------------
     // MARK: PRIVATE PROPERTIES
     //--------------------------------------------------------------------------
-    
 
     fileprivate static let machHost = mach_host_self()
     fileprivate var loadPrevious = host_cpu_load_info()
-    
-    
+
     //--------------------------------------------------------------------------
     // MARK: PUBLIC INITIALIZERS
     //--------------------------------------------------------------------------
-    
-    
+
     public init() { }
-    
-    
+
     //--------------------------------------------------------------------------
     // MARK: PUBLIC METHODS
     //--------------------------------------------------------------------------
-    
-    
+
     /**
     Get CPU usage (system, user, idle, nice). Determined by the delta between
     the current and last call. Thus, first call will always be inaccurate.
     */
-    public mutating func usageCPU() -> (system : Double,
-                                        user   : Double,
-                                        idle   : Double,
-                                        nice   : Double) {
-        let load = System.hostCPULoadInfo()
-        
+    public mutating func usageCPU() -> (system: Double,
+                                        user: Double,
+                                        idle: Double,
+                                        nice: Double) {
+        let load = SKSystem.hostCPULoadInfo()
+
         let userDiff = Double(load.cpu_ticks.0 - loadPrevious.cpu_ticks.0)
-        let sysDiff  = Double(load.cpu_ticks.1 - loadPrevious.cpu_ticks.1)
+        let sysDiff = Double(load.cpu_ticks.1 - loadPrevious.cpu_ticks.1)
         let idleDiff = Double(load.cpu_ticks.2 - loadPrevious.cpu_ticks.2)
         let niceDiff = Double(load.cpu_ticks.3 - loadPrevious.cpu_ticks.3)
-        
+
         let totalTicks = sysDiff + userDiff + niceDiff + idleDiff
-        
-        let sys  = sysDiff  / totalTicks * 100.0
+
+        let sys = sysDiff / totalTicks * 100.0
         let user = userDiff / totalTicks * 100.0
         let idle = idleDiff / totalTicks * 100.0
         let nice = niceDiff / totalTicks * 100.0
-        
+
         loadPrevious = load
-        
+
         // TODO: 2 decimal places
         // TODO: Check that total is 100%
         return (sys, user, idle, nice)
     }
-    
-    
+
     //--------------------------------------------------------------------------
     // MARK: PUBLIC STATIC METHODS
     //--------------------------------------------------------------------------
-    
-    
+
     /// Get the model name of this machine. Same as "sysctl hw.model"
     public static func modelName() -> String {
         let name: String
@@ -180,15 +160,12 @@ public struct System {
         // via I/O Kit which can also get the model name
         var size = MemoryLayout<io_name_t>.size
 
-        let ptr    = UnsafeMutablePointer<io_name_t>.allocate(capacity: 1)
+        let ptr = UnsafeMutablePointer<io_name_t>.allocate(capacity: 1)
         let result = sysctl(&mib, u_int(mib.count), ptr, &size, nil, 0)
 
+        if result == 0 { name = String(cString: UnsafeRawPointer(ptr).assumingMemoryBound(to: CChar.self)) } else { name = String() }
 
-        if result == 0 { name = String(cString: UnsafeRawPointer(ptr).assumingMemoryBound(to: CChar.self)) }
-        else           { name = String() }
-
-
-        ptr.deallocate(capacity: 1)
+        ptr.deallocate()
 
         #if DEBUG
             if result != 0 {
@@ -200,64 +177,11 @@ public struct System {
         return name
     }
 
-
-    /**
-    sysname       Name of the operating system implementation.
-    nodename      Network name of this machine.
-    release       Release level of the operating system.
-    version       Version level of the operating system.
-    machine       Machine hardware platform.
-
-    Via uname(3) manual page.
-    */
-    // FIXME: Two compiler bugs here. One has a workaround, the other requires
-    //        a C wrapper function. See issue #18
-//    public static func uname() -> (sysname: String, nodename: String,
-//                                                     release: String,
-//                                                     version: String,
-//                                                     machine: String) {
-//        // Takes a generic pointer type because the type were dealing with
-//        // (from the utsname struct) is a huge tuple of Int8s (once bridged to
-//        // Swift), so it would be really messy to go that route (would have to
-//        // type it all out explicitly)
-//        func toString<T>(ptr: UnsafePointer<T>) -> String {
-//            return String.fromCString(UnsafePointer<CChar>(ptr))!
-//        }
-//
-//        let tuple: (String, String, String, String, String)
-//        var names  = utsname()
-//        let result = Foundation.uname(&names)
-//
-//        #if DEBUG
-//            if result != 0 {
-//                print("ERROR - \(__FILE__):\(__FUNCTION__) - errno = "
-//                        + "\(result)")
-//            }
-//        #endif
-//
-//        if result == 0 {
-//            let sysname  = withUnsafePointer(&names.sysname,  toString)
-//            let nodename = withUnsafePointer(&names.nodename, toString)
-//            let release  = withUnsafePointer(&names.release,  toString)
-//            let version  = withUnsafePointer(&names.version,  toString)
-//            let machine  = withUnsafePointer(&names.machine,  toString)
-//
-//            tuple = (sysname, nodename, release, version, machine)
-//        }
-//        else {
-//            tuple = ("", "", "", "", "")
-//        }
-//
-//        return tuple
-//    }
-
-
     /// Number of physical cores on this machine.
     public static func physicalCores() -> Int {
-        return Int(System.hostBasicInfo().physical_cpu)
+        Int(SKSystem.hostBasicInfo().physical_cpu)
     }
-    
-    
+
     /**
     Number of logical cores on this machine. Will be equal to physicalCores()
     unless it has hyper-threading, in which case it will be double.
@@ -265,10 +189,9 @@ public struct System {
     https://en.wikipedia.org/wiki/Hyper-threading
     */
     public static func logicalCores() -> Int {
-        return Int(System.hostBasicInfo().logical_cpu)
+        Int(SKSystem.hostBasicInfo().logical_cpu)
     }
-    
-    
+
     /**
     System load average at 3 intervals.
     
@@ -278,23 +201,24 @@ public struct System {
     
     https://en.wikipedia.org/wiki/Load_(computing)
     */
-    public static func loadAverage(_ type: LOAD_AVG = .long) -> [Double] {
+    public static func loadAverage(_ type: LoadAvg = .long) -> [Double] {
         var avg = [Double](repeating: 0, count: 3)
-        
+
         switch type {
-            case .short:
-                let result = System.hostLoadInfo().avenrun
-                avg = [Double(result.0) / Double(LOAD_SCALE),
-                       Double(result.1) / Double(LOAD_SCALE),
-                       Double(result.2) / Double(LOAD_SCALE)]
-            case .long:
-                getloadavg(&avg, 3)
+        case .short:
+            let result = SKSystem.hostLoadInfo().avenrun
+            avg = [
+                Double(result.0) / Double(LOAD_SCALE),
+                Double(result.1) / Double(LOAD_SCALE),
+                Double(result.2) / Double(LOAD_SCALE)
+            ]
+        case .long:
+            getloadavg(&avg, 3)
         }
-        
+
         return avg
     }
-    
-    
+
     /**
     System mach factor at 3 intervals.
     
@@ -309,58 +233,56 @@ public struct System {
     - via hostinfo manual page
     */
     public static func machFactor() -> [Double] {
-        let result = System.hostLoadInfo().mach_factor
-        
-        return [Double(result.0) / Double(LOAD_SCALE),
-                Double(result.1) / Double(LOAD_SCALE),
-                Double(result.2) / Double(LOAD_SCALE)]
+        let result = SKSystem.hostLoadInfo().mach_factor
+
+        return [
+            Double(result.0) / Double(LOAD_SCALE),
+            Double(result.1) / Double(LOAD_SCALE),
+            Double(result.2) / Double(LOAD_SCALE)
+        ]
     }
-    
 
     /// Total number of processes & threads
     public static func processCounts() -> (processCount: Int, threadCount: Int) {
-        let data = System.processorLoadInfo()
+        let data = SKSystem.processorLoadInfo()
         return (Int(data.task_count), Int(data.thread_count))
     }
-    
-    
+
     /// Size of physical memory on this machine
     public static func physicalMemory(_ unit: Unit = .gigabyte) -> Double {
-        return Double(System.hostBasicInfo().max_mem) / unit.rawValue
+        Double(SKSystem.hostBasicInfo().max_mem) / unit.rawValue
     }
-    
-    
+
     /**
     System memory usage (free, active, inactive, wired, compressed).
     */
-    public static func memoryUsage() -> (free       : Double,
-                                         active     : Double,
-                                         inactive   : Double,
-                                         wired      : Double,
-                                         compressed : Double) {
-        let stats = System.VMStatistics64()
-        
-        let free     = Double(stats.free_count) * Double(PAGE_SIZE)
+    public static func memoryUsage() -> (free: Double,
+                                         active: Double,
+                                         inactive: Double,
+                                         wired: Double,
+                                         compressed: Double) {
+        let stats = SKSystem.VMStatistics64()
+
+        let free = Double(stats.free_count) * Double(PAGE_SIZE)
                                                         / Unit.gigabyte.rawValue
-        let active   = Double(stats.active_count) * Double(PAGE_SIZE)
+        let active = Double(stats.active_count) * Double(PAGE_SIZE)
                                                         / Unit.gigabyte.rawValue
         let inactive = Double(stats.inactive_count) * Double(PAGE_SIZE)
                                                         / Unit.gigabyte.rawValue
-        let wired    = Double(stats.wire_count) * Double(PAGE_SIZE)
+        let wired = Double(stats.wire_count) * Double(PAGE_SIZE)
                                                         / Unit.gigabyte.rawValue
-        
+
         // Result of the compression. This is what you see in Activity Monitor
         let compressed = Double(stats.compressor_page_count) * Double(PAGE_SIZE)
                                                         / Unit.gigabyte.rawValue
-        
+
         return (free, active, inactive, wired, compressed)
     }
-    
 
     /// How long has the system been up?
     public static func uptime() -> (days: Int, hrs: Int, mins: Int, secs: Int) {
         var currentTime = time_t()
-        var bootTime    = timeval()
+        var bootTime = timeval()
         var mib         = [CTL_KERN, KERN_BOOTTIME]
 
         // NOTE: Use strideof(), NOT sizeof() to account for data structure
@@ -380,7 +302,6 @@ public struct System {
             return (0, 0, 0, 0)
         }
 
-
         // Since we don't need anything more than second level accuracy, we use
         // time() rather than say gettimeofday(), or something else. uptime
         // command does the same
@@ -388,8 +309,8 @@ public struct System {
 
         var uptime = currentTime - bootTime.tv_sec
 
-        let days = uptime / 86400   // Number of seconds in a day
-        uptime %= 86400
+        let days = uptime / 86_400   // Number of seconds in a day
+        uptime %= 86_400
 
         let hrs = uptime / 3600     // Number of seconds in a hour
         uptime %= 3600
@@ -400,11 +321,9 @@ public struct System {
         return (days, hrs, mins, secs)
     }
 
-
     //--------------------------------------------------------------------------
     // MARK: POWER
     //--------------------------------------------------------------------------
-
 
     /**
     As seen via 'pmset -g therm' command.
@@ -428,7 +347,7 @@ public struct System {
     */
     public static func CPUPowerLimit() -> (processorSpeed: Double,
                                            processorCount: Int,
-                                           schedulerTime : Double) {
+                                           schedulerTime: Double) {
         var processorSpeed = -1.0
         var processorCount = -1
         var schedulerTime  = -1.0
@@ -445,7 +364,6 @@ public struct System {
             }
         #endif
 
-
         if result == kIOReturnSuccess,
            let data = status.move()?.takeUnretainedValue() {
                 let dataMap = data as NSDictionary
@@ -457,26 +375,24 @@ public struct System {
                                                                       as! Double
                 processorCount = dataMap[kIOPMCPUPowerLimitProcessorCountKey]!
                                                                       as! Int
-                schedulerTime  = dataMap[kIOPMCPUPowerLimitSchedulerTimeKey]!
+                schedulerTime = dataMap[kIOPMCPUPowerLimitSchedulerTimeKey]!
                                                                       as! Double
         }
 
-        status.deallocate(capacity: 1)
+        status.deallocate()
 
         return (processorSpeed, processorCount, schedulerTime)
     }
 
-
     /// Get the thermal level of the system. As seen via 'pmset -g therm'
-    public static func thermalLevel() -> System.ThermalLevel {
+    public static func thermalLevel() -> SKSystem.ThermalLevel {
         var thermalLevel: UInt32 = 0
 
         let result = IOPMGetThermalWarningLevel(&thermalLevel)
 
         if result == kIOReturnNotFound {
-            return System.ThermalLevel.NotPublished
+            return SKSystem.ThermalLevel.NotPublished
         }
-
 
         #if DEBUG
             if result != kIOReturnSuccess {
@@ -485,94 +401,69 @@ public struct System {
             }
         #endif
 
-
         // TODO: Thermal warning level values no longer available through
         //       IOKit.pwr_mgt module as of Xcode 6.3 Beta 3. Not sure if thats
         //       intended behaviour or a bug, will investigate. For now
         //       hardcoding values, will move all power related calls to a
         //       separate struct.
         switch thermalLevel {
-            case 0:
-                // kIOPMThermalWarningLevelNormal
-                return System.ThermalLevel.Normal
-            case 5:
-                // kIOPMThermalWarningLevelDanger
-                return System.ThermalLevel.Danger
-            case 10:
-                // kIOPMThermalWarningLevelCrisis
-                return System.ThermalLevel.Crisis
-            default:
-                return System.ThermalLevel.Unknown
+        case 0:
+            // kIOPMThermalWarningLevelNormal
+            return SKSystem.ThermalLevel.Normal
+        case 5:
+            // kIOPMThermalWarningLevelDanger
+            return SKSystem.ThermalLevel.Danger
+        case 10:
+            // kIOPMThermalWarningLevelCrisis
+            return SKSystem.ThermalLevel.Crisis
+        default:
+            return SKSystem.ThermalLevel.Unknown
         }
     }
-
 
     //--------------------------------------------------------------------------
     // MARK: PRIVATE METHODS
     //--------------------------------------------------------------------------
-    
-    
+
     fileprivate static func hostBasicInfo() -> host_basic_info {
         // TODO: Why is host_basic_info.max_mem val different from sysctl?
-        
-        var size     = HOST_BASIC_INFO_COUNT
+
+        var size = HOST_BASIC_INFO_COUNT
         let hostInfo = host_basic_info_t.allocate(capacity: 1)
-        
+
         let result = hostInfo.withMemoryRebound(to: integer_t.self, capacity: Int(size)) {
             host_info(machHost, HOST_BASIC_INFO, $0, &size)
         }
-  
+
         let data = hostInfo.move()
-        hostInfo.deallocate(capacity: 1)
-        
+        hostInfo.deallocate()
+
         #if DEBUG
             if result != KERN_SUCCESS {
                 print("ERROR - \(#file):\(#function) - kern_result_t = "
                         + "\(result)")
             }
         #endif
-        
+
         return data
     }
 
-    
     fileprivate static func hostLoadInfo() -> host_load_info {
-        var size     = HOST_LOAD_INFO_COUNT
+        var size = HOST_LOAD_INFO_COUNT
         let hostInfo = host_load_info_t.allocate(capacity: 1)
-        
+
         let result = hostInfo.withMemoryRebound(to: integer_t.self, capacity: Int(size)) {
-            host_statistics(machHost, HOST_LOAD_INFO,
-                                      $0,
-                                      &size)
+            host_statistics(
+                machHost,
+                HOST_LOAD_INFO,
+                $0,
+                &size
+            )
         }
-        
+
         let data = hostInfo.move()
-        hostInfo.deallocate(capacity: 1)
-        
-        #if DEBUG
-            if result != KERN_SUCCESS {
-                print("ERROR - \(#file):\(#function) - kern_result_t = "
-                        + "\(result)")
-            }
-        #endif
-        
-        return data
-    }
-    
-    
-    fileprivate static func hostCPULoadInfo() -> host_cpu_load_info {
-        var size     = HOST_CPU_LOAD_INFO_COUNT
-        let hostInfo = host_cpu_load_info_t.allocate(capacity: 1)
-        
-        let result = hostInfo.withMemoryRebound(to: integer_t.self, capacity: Int(size)) {
-            host_statistics(machHost, HOST_CPU_LOAD_INFO,
-                                      $0,
-                                      &size)
-        }
-        
-        let data = hostInfo.move()
-        hostInfo.deallocate(capacity: 1)
-        
+        hostInfo.deallocate()
+
         #if DEBUG
             if result != KERN_SUCCESS {
                 print("ERROR - \(#file):\(#function) - kern_result_t = "
@@ -582,14 +473,39 @@ public struct System {
 
         return data
     }
-    
-    
+
+    fileprivate static func hostCPULoadInfo() -> host_cpu_load_info {
+        var size = HOST_CPU_LOAD_INFO_COUNT
+        let hostInfo = host_cpu_load_info_t.allocate(capacity: 1)
+
+        let result = hostInfo.withMemoryRebound(to: integer_t.self, capacity: Int(size)) {
+            host_statistics(
+                machHost,
+                HOST_CPU_LOAD_INFO,
+                $0,
+                &size
+            )
+        }
+
+        let data = hostInfo.move()
+        hostInfo.deallocate()
+
+        #if DEBUG
+            if result != KERN_SUCCESS {
+                print("ERROR - \(#file):\(#function) - kern_result_t = "
+                        + "\(result)")
+            }
+        #endif
+
+        return data
+    }
+
     fileprivate static func processorLoadInfo() -> processor_set_load_info {
         // NOTE: Duplicate load average and mach factor here
-        
-        var pset   = processor_set_name_t()
+
+        var pset = processor_set_name_t()
         var result = processor_set_default(machHost, &pset)
-        
+
         if result != KERN_SUCCESS {
             #if DEBUG
                 print("ERROR - \(#file):\(#function) - kern_result_t = "
@@ -599,10 +515,9 @@ public struct System {
             return processor_set_load_info()
         }
 
-        
-        var count    = PROCESSOR_SET_LOAD_INFO_COUNT
+        var count = PROCESSOR_SET_LOAD_INFO_COUNT
         let info_out = processor_set_load_info_t.allocate(capacity: 1)
-        
+
         result = info_out.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
             processor_set_statistics(pset,
                                      PROCESSOR_SET_LOAD_INFO,
@@ -617,19 +532,17 @@ public struct System {
             }
         #endif
 
-
         // This is isn't mandatory as I understand it, just helps keep the ref
         // count correct. This is because the port is to the default processor
         // set which should exist by default as long as the machine is running
         mach_port_deallocate(mach_task_self_, pset)
 
         let data = info_out.move()
-        info_out.deallocate(capacity: 1)
-        
+        info_out.deallocate()
+
         return data
     }
-    
-    
+
     /**
     64-bit virtual memory statistics. This should apply to all Mac's that run
     10.9 and above. For iOS, iPhone 5S, iPad Air & iPad Mini 2 and on.
@@ -638,9 +551,9 @@ public struct System {
     and above, with both ARM & ARM64.
     */
     fileprivate static func VMStatistics64() -> vm_statistics64 {
-        var size     = HOST_VM_INFO64_COUNT
+        var size = HOST_VM_INFO64_COUNT
         let hostInfo = vm_statistics64_t.allocate(capacity: 1)
-        
+
         let result = hostInfo.withMemoryRebound(to: integer_t.self, capacity: Int(size)) {
             host_statistics64(machHost,
                               HOST_VM_INFO64,
@@ -649,15 +562,15 @@ public struct System {
         }
 
         let data = hostInfo.move()
-        hostInfo.deallocate(capacity: 1)
-        
+        hostInfo.deallocate()
+
         #if DEBUG
             if result != KERN_SUCCESS {
                 print("ERROR - \(#file):\(#function) - kern_result_t = "
                     + "\(result)")
             }
         #endif
-        
+
         return data
     }
 }
