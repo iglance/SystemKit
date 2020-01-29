@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		01FE86D20659AA3A27533374 /* Pods_SystemKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94613B6CB7A9424698DD4455 /* Pods_SystemKit.framework */; };
+		1F842BF9617E9078F0C2729D /* Pods_SystemKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAF641D398C78B6B468B95F1 /* Pods_SystemKit.framework */; };
 		4C4656641A678B9E0091A8CB /* Process.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C4656631A678B9E0091A8CB /* Process.swift */; };
 		4C543D221A08396700C5D9B2 /* SystemKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C543D211A08396700C5D9B2 /* SystemKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4C543D281A08396700C5D9B2 /* SystemKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C543D1C1A08396700C5D9B2 /* SystemKit.framework */; };
@@ -40,7 +40,7 @@
 		4C543D381A08398500C5D9B2 /* System.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = System.swift; sourceTree = "<group>"; };
 		4C543D3A1A08399100C5D9B2 /* Battery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Battery.swift; sourceTree = "<group>"; };
 		4C6D98B71A3A8FF500BA2B36 /* IOReturn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IOReturn.swift; sourceTree = "<group>"; };
-		94613B6CB7A9424698DD4455 /* Pods_SystemKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SystemKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CAF641D398C78B6B468B95F1 /* Pods_SystemKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SystemKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,7 +48,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				01FE86D20659AA3A27533374 /* Pods_SystemKit.framework in Frameworks */,
+				1F842BF9617E9078F0C2729D /* Pods_SystemKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,7 +134,7 @@
 		9CB95B7FA4DC22C3E8184003 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				94613B6CB7A9424698DD4455 /* Pods_SystemKit.framework */,
+				CAF641D398C78B6B468B95F1 /* Pods_SystemKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -157,8 +157,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4C543D321A08396700C5D9B2 /* Build configuration list for PBXNativeTarget "SystemKit" */;
 			buildPhases = (
-				B4F4AA0F23E072BD00F57F70 /* ShellScript */,
 				281EBEACAA7CF8A8BB1FE740 /* [CP] Check Pods Manifest.lock */,
+				B4F4AA0F23E072BD00F57F70 /* ShellScript */,
 				4C543D171A08396700C5D9B2 /* Sources */,
 				4C543D181A08396700C5D9B2 /* Frameworks */,
 				4C543D191A08396700C5D9B2 /* Headers */,
