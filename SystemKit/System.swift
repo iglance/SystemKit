@@ -135,6 +135,10 @@ public struct SKSystem {
 
         let totalTicks = sysDiff + userDiff + niceDiff + idleDiff
 
+        if totalTicks == 0 {
+            return (0.0, 0.0, 0.0, 0.0)
+        }
+
         let sys = sysDiff / totalTicks * 100.0
         let user = userDiff / totalTicks * 100.0
         let idle = idleDiff / totalTicks * 100.0
