@@ -27,6 +27,7 @@
 import IOKit
 import Foundation
 import os.log
+import CocoaLumberjack
 
 /**
 Battery statistics for OS X, read-only.
@@ -154,13 +155,22 @@ public struct SKBattery {
     https://en.wikipedia.org/wiki/Ampere-hour
     */
     public func currentCapacity() -> Int {
-        let prop = IORegistryEntryCreateCFProperty(
+        guard let prop = IORegistryEntryCreateCFProperty(
             service,
             Key.CurrentCapacity.rawValue as CFString,
             kCFAllocatorDefault,
             0
-        )
-        return prop!.takeUnretainedValue() as! Int
+            ) else {
+                DDLogError("Failed to read the current capacity")
+                return 0
+        }
+        
+        guard let castValue = prop.takeUnretainedValue() as? Int else {
+            DDLogError("Failed to cast the value to an Int")
+            return 0
+        }
+        
+        return castValue
     }
 
     /**
@@ -169,13 +179,23 @@ public struct SKBattery {
     
     https://en.wikipedia.org/wiki/Ampere-hour
     */
-    public func maxCapactiy() -> Int {
-        let prop = IORegistryEntryCreateCFProperty(service,
-                                                   Key.MaxCapacity.rawValue as CFString,
-                                                   kCFAllocatorDefault,
-                                                   0
-        )
-        return prop!.takeUnretainedValue() as! Int
+    public func maxCapacity() -> Int {
+        guard let prop = IORegistryEntryCreateCFProperty(
+            service,
+            Key.MaxCapacity.rawValue as CFString,
+            kCFAllocatorDefault,
+            0
+            ) else {
+                DDLogError("Failed to retrieve the mac capacity of the battery")
+                return 0
+        }
+        
+        guard let castValue = prop.takeUnretainedValue() as? Int else {
+            DDLogError("Failed to cast the value to an Int")
+            return 0
+        }
+        
+        return castValue
     }
 
     /**
@@ -186,13 +206,22 @@ public struct SKBattery {
     https://en.wikipedia.org/wiki/Ampere-hour
     */
     public func designCapacity() -> Int {
-        let prop = IORegistryEntryCreateCFProperty(
+        guard let prop = IORegistryEntryCreateCFProperty(
             service,
             Key.DesignCapacity.rawValue as CFString,
             kCFAllocatorDefault,
             0
-        )
-        return prop!.takeUnretainedValue() as! Int
+            ) else {
+                DDLogError("Failed to read the design capacity of the battery")
+                return 0
+        }
+        
+        guard let castValue = prop.takeUnretainedValue() as? Int else {
+            DDLogError("Failed to cast the value to an Int")
+            return 0
+        }
+        
+        return castValue
     }
 
     /**
@@ -201,13 +230,22 @@ public struct SKBattery {
     https://en.wikipedia.org/wiki/Charge_cycle
     */
     public func cycleCount() -> Int {
-        let prop = IORegistryEntryCreateCFProperty(
+        guard let prop = IORegistryEntryCreateCFProperty(
             service,
             Key.CycleCount.rawValue as CFString,
             kCFAllocatorDefault,
             0
-        )
-        return prop!.takeUnretainedValue() as! Int
+            ) else {
+                DDLogError("Failed to read the cycle count")
+                return 0
+        }
+        
+        guard let castValue = prop.takeUnretainedValue() as? Int else {
+            DDLogError("Failed to cast the value to an Int")
+            return 0
+        }
+        
+        return castValue
     }
 
     /**
@@ -216,13 +254,22 @@ public struct SKBattery {
     https://en.wikipedia.org/wiki/Charge_cycle
     */
     public func designCycleCount() -> Int {
-        let prop = IORegistryEntryCreateCFProperty(
+        guard let prop = IORegistryEntryCreateCFProperty(
             service,
             Key.DesignCycleCount.rawValue as CFString,
             kCFAllocatorDefault,
             0
-        )
-        return prop!.takeUnretainedValue() as! Int
+            ) else {
+                DDLogError("Failed to read the design cycle count of the battery")
+                return 0
+        }
+        
+        guard let castValue = prop.takeUnretainedValue() as? Int else {
+            DDLogError("Failed to cast the value")
+            return 0
+        }
+        
+        return castValue
     }
 
     /**
@@ -231,13 +278,22 @@ public struct SKBattery {
     :returns: True if it is, false otherwise.
     */
     public func isACPowered() -> Bool {
-        let prop = IORegistryEntryCreateCFProperty(
+        guard let prop = IORegistryEntryCreateCFProperty(
             service,
             Key.ACPowered.rawValue as CFString,
             kCFAllocatorDefault,
             0
-        )
-        return prop!.takeUnretainedValue() as! Bool
+            ) else {
+                DDLogError("Failed to read whether the Battery is on AC")
+                return false
+        }
+
+        guard let castValue = prop.takeUnretainedValue() as? Bool else {
+            DDLogError("Failed to cast the value to a Bool")
+            return false
+        }
+
+        return castValue
     }
 
     /**
@@ -246,13 +302,22 @@ public struct SKBattery {
     :returns: True if it is, false otherwise.
     */
     public func isCharging() -> Bool {
-        let prop = IORegistryEntryCreateCFProperty(
+        guard let prop = IORegistryEntryCreateCFProperty(
             service,
             Key.IsCharging.rawValue as CFString,
             kCFAllocatorDefault,
             0
-        )
-        return prop!.takeUnretainedValue() as! Bool
+            ) else {
+                DDLogError("Failed to read whether the battery is charging")
+                return false
+        }
+        
+        guard let castValue = prop.takeUnretainedValue() as? Bool else {
+            DDLogError("Failed to cast the value to a Bool")
+            return false
+        }
+        
+        return castValue
     }
 
     /**
@@ -261,13 +326,22 @@ public struct SKBattery {
     :returns: True if it is, false otherwise.
     */
     public func isCharged() -> Bool {
-        let prop = IORegistryEntryCreateCFProperty(
+        guard let prop = IORegistryEntryCreateCFProperty(
             service,
             Key.FullyCharged.rawValue as CFString,
             kCFAllocatorDefault,
             0
-        )
-        return prop!.takeUnretainedValue() as! Bool
+            ) else {
+                DDLogError("Failed to read whether the battery is fully charged")
+                return false
+        }
+        
+        guard let castValue = prop.takeUnretainedValue() as? Bool else {
+            DDLogError("Failed to cast the value to a Bool")
+            return false
+        }
+        
+        return castValue
     }
 
     /**
@@ -277,7 +351,15 @@ public struct SKBattery {
     :returns: The current charge as a % out of 100.
     */
     public func charge() -> Double {
-        floor(Double(currentCapacity()) / Double(maxCapactiy()) * 100.0)
+        let max = maxCapacity()
+        let current = currentCapacity()
+        
+        if max == 0 {
+            DDLogError("Maximum capacity is zero")
+            return 0
+        }
+        
+        return floor(Double(current) / Double(max) * 100.0)
     }
 
     /**
@@ -288,13 +370,22 @@ public struct SKBattery {
     :returns: Time remaining in minutes.
     */
     public func timeRemaining() -> Int {
-        let prop = IORegistryEntryCreateCFProperty(
+        guard let prop = IORegistryEntryCreateCFProperty(
             service,
             Key.TimeRemaining.rawValue as CFString,
             kCFAllocatorDefault,
             0
-        )
-        return prop!.takeUnretainedValue() as! Int
+            ) else {
+                DDLogError("Failed to read the remaining time of the battery")
+                return 0
+        }
+        
+        guard let castValue = prop.takeUnretainedValue() as? Int else {
+            DDLogError("Failed to cast the value to an Int")
+            return 0
+        }
+        
+        return castValue
     }
 
     /**
@@ -319,14 +410,22 @@ public struct SKBattery {
     :returns: Battery temperature, by default in Celsius.
     */
     public func temperature(_ unit: TemperatureUnit = .celsius) -> Double {
-        let prop = IORegistryEntryCreateCFProperty(
+        guard let prop = IORegistryEntryCreateCFProperty(
             service,
             Key.Temperature.rawValue as CFString,
             kCFAllocatorDefault,
             0
-        )
+            ) else {
+                DDLogError("Failed to raed the temperature")
+                return 0
+        }
 
-        var temperature = prop?.takeUnretainedValue() as! Double / 100.0
+        guard let castValue = prop.takeUnretainedValue() as? Double else {
+            DDLogError("Failed to cast the value to a Double")
+            return 0
+        }
+        
+        var temperature = castValue / 100.0
 
         switch unit {
         case .celsius:
