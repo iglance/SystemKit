@@ -164,12 +164,12 @@ public struct SKBattery {
                 DDLogError("Failed to read the current capacity")
                 return 0
         }
-        
+
         guard let castValue = prop.takeUnretainedValue() as? Int else {
             DDLogError("Failed to cast the value to an Int")
             return 0
         }
-        
+
         return castValue
     }
 
@@ -189,12 +189,12 @@ public struct SKBattery {
                 DDLogError("Failed to retrieve the mac capacity of the battery")
                 return 0
         }
-        
+
         guard let castValue = prop.takeUnretainedValue() as? Int else {
             DDLogError("Failed to cast the value to an Int")
             return 0
         }
-        
+
         return castValue
     }
 
@@ -215,12 +215,12 @@ public struct SKBattery {
                 DDLogError("Failed to read the design capacity of the battery")
                 return 0
         }
-        
+
         guard let castValue = prop.takeUnretainedValue() as? Int else {
             DDLogError("Failed to cast the value to an Int")
             return 0
         }
-        
+
         return castValue
     }
 
@@ -239,12 +239,12 @@ public struct SKBattery {
                 DDLogError("Failed to read the cycle count")
                 return 0
         }
-        
+
         guard let castValue = prop.takeUnretainedValue() as? Int else {
             DDLogError("Failed to cast the value to an Int")
             return 0
         }
-        
+
         return castValue
     }
 
@@ -263,12 +263,12 @@ public struct SKBattery {
                 DDLogError("Failed to read the design cycle count of the battery")
                 return 0
         }
-        
+
         guard let castValue = prop.takeUnretainedValue() as? Int else {
             DDLogError("Failed to cast the value")
             return 0
         }
-        
+
         return castValue
     }
 
@@ -311,12 +311,12 @@ public struct SKBattery {
                 DDLogError("Failed to read whether the battery is charging")
                 return false
         }
-        
+
         guard let castValue = prop.takeUnretainedValue() as? Bool else {
             DDLogError("Failed to cast the value to a Bool")
             return false
         }
-        
+
         return castValue
     }
 
@@ -335,12 +335,12 @@ public struct SKBattery {
                 DDLogError("Failed to read whether the battery is fully charged")
                 return false
         }
-        
+
         guard let castValue = prop.takeUnretainedValue() as? Bool else {
             DDLogError("Failed to cast the value to a Bool")
             return false
         }
-        
+
         return castValue
     }
 
@@ -353,12 +353,12 @@ public struct SKBattery {
     public func charge() -> Double {
         let max = maxCapacity()
         let current = currentCapacity()
-        
+
         if max == 0 {
             DDLogError("Maximum capacity is zero")
             return 0
         }
-        
+
         return floor(Double(current) / Double(max) * 100.0)
     }
 
@@ -379,12 +379,12 @@ public struct SKBattery {
                 DDLogError("Failed to read the remaining time of the battery")
                 return 0
         }
-        
+
         guard let castValue = prop.takeUnretainedValue() as? Int else {
             DDLogError("Failed to cast the value to an Int")
             return 0
         }
-        
+
         return castValue
     }
 
@@ -424,7 +424,7 @@ public struct SKBattery {
             DDLogError("Failed to cast the value to a Double")
             return 0
         }
-        
+
         var temperature = castValue / 100.0
 
         switch unit {
