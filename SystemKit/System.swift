@@ -260,12 +260,15 @@ public struct SKSystem {
     /**
     System memory usage (free, active, inactive, wired, compressed).
     */
-    public static func memoryUsage() -> (free: Double,
-                                         active: Double,
-                                         inactive: Double,
-                                         wired: Double,
-                                         compressed: Double,
-                                         appMemory: Double) {
+    public static func memoryUsage() -> (
+        free: Double,
+        active: Double,
+        inactive: Double,
+        wired: Double,
+        compressed: Double,
+        appMemory: Double,
+        cachedFiles: Double
+    ) {
         let stats = SKSystem.VMStatistics64()
 
         let free = Double(stats.free_count) * Double(PAGE_SIZE)
@@ -285,7 +288,11 @@ public struct SKSystem {
         let appMemory = Double(stats.internal_page_count - stats.purgeable_count) * Double(PAGE_SIZE)
                                                         / Unit.gigabyte.rawValue
 
-        return (free, active, inactive, wired, compressed, appMemory)
+        // This is what you see in Activity Monitor as "Cached Files"
+        let cachedFiles = Double(stats.external_page_count + stats.purgeable_count) * Double(PAGE_SIZE) / Unit.gigabyte.rawValue
+
+
+        return (free, active, inactive, wired, compressed, appMemory, cachedFiles)
     }
 
     /// How long has the system been up?
