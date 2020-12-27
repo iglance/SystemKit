@@ -158,7 +158,7 @@ public struct SKSystem {
     /// Get the model name of this machine. Same as "sysctl hw.model"
     public static func modelName() -> String {
         let name: String
-        var mib  = [CTL_HW, HW_MODEL]
+        var mib = [CTL_HW, HW_MODEL]
 
         // Max model name size not defined by sysctl. Instead we use io_name_t
         // via I/O Kit which can also get the model name
